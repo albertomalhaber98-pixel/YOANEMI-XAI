@@ -1,0 +1,16 @@
+numpy
+pillow
+opencv-python-headless
+albumentations
+segmentation-models-pytorch
+pandas
+requests
+matplotlib
+seaborn
+psutil
+gitpython
+ipython
+scipy
+pyyaml
+tqdm
+thop

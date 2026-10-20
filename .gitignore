@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Entorno virtual
+.venv/
+
+# Variables locales
+.env
+
+# IDE
+.idea/
+.vscode/
+
+# Modelos pesados
+weights/*.pt
+weights/*.pth
+weights/*.onnx
+
+# Código externo restaurable
+external/yolov9/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

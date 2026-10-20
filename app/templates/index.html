@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        http-equiv="Cache-Control"
+        content="no-store, no-cache, must-revalidate"
+    >
+
+    <meta
+        http-equiv="Pragma"
+        content="no-cache"
+    >
+
+    <title>{{ app_name }}</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/css/app.css?v={{ app_version }}"
+    >
+</head>
+
+<body
+    data-max-upload-mb="{{ max_upload_mb }}"
+>
+    <header class="site-header">
+        <div class="container header-content">
+            <div>
+                <p class="eyebrow">
+                    Huancas Remaycuna - Malhaber Mimbela
+                </p>
+
+                <h1>
+                    {{ app_name }}
+                </h1>
+
+                <p class="header-description">
+                    Segmentación de conjuntiva con U-Net,
+                    clasificación con YOLOv9 y explicación
+                    visual mediante Grad-CAM++.
+                </p>
+            </div>
+
+        </div>
+    </header>
+
+    <main class="container main-content">
+        <section
+            class="panel upload-panel"
+            aria-labelledby="upload-title"
+        >
+            <div class="section-heading">
+                <div>
+                    <p class="section-number">
+                        Paso 1
+                    </p>
+
+                    <h2 id="upload-title">
+                        Seleccionar imagen ocular
+                    </h2>
+                </div>
+            </div>
+
+            <form
+                id="analysis-form"
+                enctype="multipart/form-data"
+                novalidate
+            >
+                <label
+                    class="file-selector"
+                    for="image-input"
+                >
+                    <span class="file-selector-title">
+                        Seleccionar una imagen
+                    </span>
+
+                    <span class="file-selector-description">
+                        Formatos permitidos: JPEG, PNG o WebP.
+                        Tamaño máximo: {{ max_upload_mb }} MB.
+                    </span>
+
+                    <input
+                        id="image-input"
+                        name="image"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        required
+                    >
+                </label>
+
+                <div
+                    id="selected-file"
+                    class="selected-file"
+                    hidden
+                >
+                    <div>
+                        <strong id="selected-file-name"></strong>
+
+                        <span id="selected-file-size"></span>
+                    </div>
+                </div>
+
+                <div
+                    id="preview-section"
+                    class="inline-preview"
+                    hidden
+                >
+                    <div class="inline-preview-heading">
+                        <strong>Vista previa</strong>
+
+                        <span>
+                            Imagen seleccionada
+                        </span>
+                    </div>
+
+                    <img
+                        id="original-preview"
+                        class="original-preview"
+                        alt="Vista previa de la imagen ocular seleccionada"
+                    >
+                </div>
+
+                <div class="form-actions">
+                    <button
+                        id="analyze-button"
+                        class="button button-primary"
+                        type="submit"
+                        disabled
+                    >
+                        Analizar imagen
+                    </button>
+
+                    <button
+                        id="clear-button"
+                        class="button button-secondary"
+                        type="button"
+                    >
+                        Limpiar
+                    </button>
+                </div>
+            </form>
+
+            <div
+                id="status-message"
+                class="status-message"
+                role="status"
+                aria-live="polite"
+                hidden
+            ></div>
+        </section>
+
+        <section
+            id="loading-section"
+            class="panel loading-panel"
+            aria-live="polite"
+            hidden
+        >
+            <div
+                class="spinner"
+                aria-hidden="true"
+            ></div>
+
+            <div>
+                <h2>Procesando imagen</h2>
+
+                <p>
+                    Ejecutando U-Net, YOLOv9-T y Grad-CAM++.
+                    En CPU este proceso puede tardar varios segundos.
+                </p>
+            </div>
+        </section>
+
+        <section
+            id="results-section"
+            class="results-section"
+            aria-labelledby="results-title"
+            hidden
+        >
+            <div class="panel result-summary-panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-number">
+                            Resultado
+                        </p>
+
+                        <h2 id="results-title">
+                            Análisis completado
+                        </h2>
+                    </div>
+                </div>
+
+                <div class="summary-grid">
+                    <article class="metric-card primary-metric">
+                        <span class="metric-label">
+                            Clasificación
+                        </span>
+
+                        <strong
+                            id="prediction-label"
+                            class="prediction-value"
+                        ></strong>
+
+                        <span
+                            id="prediction-model-class"
+                            class="metric-secondary"
+                        ></span>
+                    </article>
+
+                    <article class="metric-card">
+                        <span class="metric-label">
+                            Confianza
+                        </span>
+
+                        <strong
+                            id="confidence-value"
+                            class="metric-value"
+                        ></strong>
+                    </article>
+
+                    <article class="metric-card">
+                        <span class="metric-label">
+                            Área segmentada
+                        </span>
+
+                        <strong
+                            id="segmented-area-value"
+                            class="metric-value"
+                        ></strong>
+                    </article>
+
+                    <article class="metric-card">
+                        <span class="metric-label">
+                            Tiempo de procesamiento
+                        </span>
+
+                        <strong
+                            id="processing-time-value"
+                            class="metric-value"
+                        ></strong>
+                    </article>
+                </div>
+
+                <div class="probability-section">
+                    <h3>Probabilidades por clase</h3>
+
+                    <div
+                        id="probability-list"
+                        class="probability-list"
+                    ></div>
+                </div>
+
+                <div
+                    id="result-disclaimer"
+                    class="disclaimer"
+                ></div>
+            </div>
+
+            <section
+                class="panel"
+                aria-labelledby="main-images-title"
+            >
+                <div class="section-heading">
+                    <div>
+                        <p class="section-number">
+                            Paso 2
+                        </p>
+
+                        <h2 id="main-images-title">
+                            Resultados visuales principales
+                        </h2>
+                    </div>
+                </div>
+
+                <div class="image-grid main-results-grid">
+                    <article class="image-card main-result-card">
+                        <div class="image-card-heading">
+                            <span class="result-step">
+                                1
+                            </span>
+
+                            <div>
+                                <h3>Imagen original</h3>
+
+                                <p>
+                                    Imagen ocular seleccionada por el usuario.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="main-result-image-container">
+                            <img
+                                id="result-original-image"
+                                class="result-image main-result-image"
+                                alt="Imagen ocular original"
+                            >
+                        </div>
+                    </article>
+
+                    <article class="image-card main-result-card">
+                        <div class="image-card-heading">
+                            <span class="result-step">
+                                2
+                            </span>
+
+                            <div>
+                                <h3>Conjuntiva segmentada</h3>
+
+                                <p>
+                                    Región identificada por U-Net sobre fondo negro.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="main-result-image-container">
+                            <img
+                                id="segmented-crop-image"
+                                class="result-image main-result-image"
+                                alt="Recorte segmentado de la conjuntiva"
+                            >
+                        </div>
+                    </article>
+
+                    <article class="image-card main-result-card">
+                        <div class="image-card-heading">
+                            <span class="result-step">
+                                3
+                            </span>
+
+                            <div>
+                                <h3>Grad-CAM++</h3>
+
+                                <p>
+                                    Regiones relevantes para explicar la clasificación.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="main-result-image-container">
+                            <img
+                                id="gradcam-tissue-overlay-image"
+                                class="result-image main-result-image"
+                                alt="Grad-CAM++ superpuesto sobre la conjuntiva"
+                            >
+                        </div>
+                    </article>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>
+                Explicabilidad de Redes YOLOv9 para la Identificación de anemia mediante análisis colorimétrico de imágenes de la conjuntiva palpebral.
+            </p>
+        </div>
+    </footer>
+
+    <script
+        type="module"
+        src="/static/js/app.js?v={{ app_version }}"
+    ></script>
+</body>
+</html>
